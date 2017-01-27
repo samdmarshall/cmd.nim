@@ -1218,19 +1218,19 @@ function main() {
   <a class="reference reference-toplevel" href="#7" id="57">Types</a>
   <ul class="simple simple-toc-section">
       <li><a class="reference" href="#Command"
-    title="Command* = object
+    title="Command = object
   name*: string                ## Name of the command, the first word that will be entered into the prompt, all following words are arguments to this command
   help*: string                ## Text to display when invoking the `help` command for this command
   preCmd*: CmdCallback         ## A callback that gets run prior to the command being run (optional)
   exeCmd*: CmdCallback         ## Function contaning the primary logic for the command 
   postCmd*: CmdCallback        ## A callback that gets run prior to the command being run (optional)"><wbr />Command<span class="attachedType" style="visibility:hidden"></span></a></li>
   <li><a class="reference" href="#CmdPrompt"
-    title="CmdPrompt* = object
+    title="CmdPrompt = object
   commands*: HashSet[Command]  ## 
   promptString*: string
   activePrompt: bool"><wbr />Cmd<wbr />Prompt<span class="attachedType" style="visibility:hidden"></span></a></li>
   <li><a class="reference" href="#CmdCallback"
-    title="CmdCallback* = proc (ctx: var CmdPrompt; input: seq[string]): void"><wbr />Cmd<wbr />Callback<span class="attachedType" style="visibility:hidden"></span></a></li>
+    title="CmdCallback = proc (ctx: var CmdPrompt; input: seq[string]): void"><wbr />Cmd<wbr />Callback<span class="attachedType" style="visibility:hidden"></span></a></li>
 
   </ul>
 </li>
@@ -1238,9 +1238,9 @@ function main() {
   <a class="reference reference-toplevel" href="#12" id="62">Procs</a>
   <ul class="simple simple-toc-section">
       <li><a class="reference" href="#run,CmdPrompt"
-    title="run*(ctx: var CmdPrompt): void"><wbr />run<span class="attachedType" style="visibility:hidden"></span></a></li>
+    title="run(ctx: var CmdPrompt): void"><wbr />run<span class="attachedType" style="visibility:hidden">CmdPrompt</span></a></li>
   <li><a class="reference" href="#hash,Command"
-    title="hash*(command: Command): hashes.Hash"><wbr />hash<span class="attachedType" style="visibility:hidden"></span></a></li>
+    title="hash(command: Command): hashes.Hash"><wbr />hash<span class="attachedType" style="visibility:hidden">Command</span></a></li>
 
   </ul>
 </li>
@@ -1259,7 +1259,7 @@ function main() {
 <div class="section" id="7">
 <h1><a class="toc-backref" href="#7">Types</a></h1>
 <dl class="item">
-<dt id="Command"><a name="Command"></a><pre><span class="Identifier">Command</span><span class="Operator">*</span> <span class="Other">=</span> <span class="Keyword">object</span>
+<dt id="Command"><a name="Command"></a><pre><span class="Identifier">Command</span> <span class="Other">=</span> <span class="Keyword">object</span>
   <span class="Identifier">name</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">string</span>                <span class="Comment">## Name of the command, the first word that will be entered into the prompt, all following words are arguments to this command</span>
   <span class="Identifier">help</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">string</span>                <span class="Comment">## Text to display when invoking the `help` command for this command</span>
   <span class="Identifier">preCmd</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">CmdCallback</span>         <span class="Comment">## A callback that gets run prior to the command being run (optional)</span>
@@ -1274,7 +1274,7 @@ class="link-seesrc" target="_blank">Source</a>
 <a href="/edit/devel/cmd.nim#L28" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
-<dt id="CmdPrompt"><a name="CmdPrompt"></a><pre><span class="Identifier">CmdPrompt</span><span class="Operator">*</span> <span class="Other">=</span> <span class="Keyword">object</span>
+<dt id="CmdPrompt"><a name="CmdPrompt"></a><pre><span class="Identifier">CmdPrompt</span> <span class="Other">=</span> <span class="Keyword">object</span>
   <span class="Identifier">commands</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">HashSet</span><span class="Other">[</span><span class="Identifier">Command</span><span class="Other">]</span>  <span class="Comment">## </span>
   <span class="Identifier">promptString</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">string</span>
   <span class="Identifier">activePrompt</span><span class="Other">:</span> <span class="Identifier">bool</span>
@@ -1287,7 +1287,7 @@ class="link-seesrc" target="_blank">Source</a>
 <a href="/edit/devel/cmd.nim#L40" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
-<dt id="CmdCallback"><a name="CmdCallback"></a><pre><span class="Identifier">CmdCallback</span><span class="Operator">*</span> <span class="Other">=</span> <span class="Keyword">proc</span> <span class="Other">(</span><span class="Identifier">ctx</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">CmdPrompt</span><span class="Other">;</span> <span class="Identifier">input</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">string</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">void</span> <span class="Other pragmabegin">{.</span><div class="pragma"><span class="Identifier">gcsafe</span></div><span class="Other pragmaend">.}</span></pre></dt>
+<dt id="CmdCallback"><a name="CmdCallback"></a><pre><span class="Identifier">CmdCallback</span> <span class="Other">=</span> <span class="Keyword">proc</span> <span class="Other">(</span><span class="Identifier">ctx</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">CmdPrompt</span><span class="Other">;</span> <span class="Identifier">input</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">string</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">void</span> <span class="Other pragmabegin">{.</span><div class="pragma"><span class="Identifier">gcsafe</span></div><span class="Other pragmaend">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
@@ -1301,7 +1301,8 @@ class="link-seesrc" target="_blank">Source</a>
 <div class="section" id="12">
 <h1><a class="toc-backref" href="#12">Procs</a></h1>
 <dl class="item">
-<dt id="run"><a name="run,CmdPrompt"></a><pre><span class="Keyword">proc</span> <span class="Identifier">run</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">ctx</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">CmdPrompt</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">void</span></pre></dt>
+<dt id="run"><a name="run,CmdPrompt"></a><pre><span class="Keyword">proc</span> <span class="Identifier">run</span><span class="Other">(</span><span class="Identifier">ctx</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">CmdPrompt</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">void</span> <span class="Other pragmabegin">{.</span><div class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">IOError</span><span class="Other">,</span> <span class="Identifier">Exception</span><span class="Other">]</span><span class="Other">,</span>
+                                <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">WriteIOEffect</span><span class="Other">,</span> <span class="Identifier">ReadIOEffect</span><span class="Other">,</span> <span class="Identifier">RootEffect</span><span class="Other">]</span></div><span class="Other pragmaend">.}</span></pre></dt>
 <dd>
 Starts the interactive command prompt
 &nbsp;&nbsp;<a
@@ -1310,7 +1311,7 @@ class="link-seesrc" target="_blank">Source</a>
 <a href="/edit/devel/cmd.nim#L117" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
-<dt id="hash"><a name="hash,Command"></a><pre><span class="Keyword">proc</span> <span class="Identifier">hash</span><span class="Operator">*</span><span class="Other">(</span><span class="Identifier">command</span><span class="Other">:</span> <span class="Identifier">Command</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">hashes</span><span class="Other">.</span><span class="Identifier">Hash</span></pre></dt>
+<dt id="hash"><a name="hash,Command"></a><pre><span class="Keyword">proc</span> <span class="Identifier">hash</span><span class="Other">(</span><span class="Identifier">command</span><span class="Other">:</span> <span class="Identifier">Command</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">hashes</span><span class="Other">.</span><span class="Identifier">Hash</span> <span class="Other pragmabegin">{.</span><div class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></div><span class="Other pragmaend">.}</span></pre></dt>
 <dd>
 Exposing the hash implementation for the <cite>Command</cite> object
 &nbsp;&nbsp;<a
@@ -1329,7 +1330,7 @@ class="link-seesrc" target="_blank">Source</a>
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br/>
-        <small>Made with Nim. Generated: 2017-01-27 14:01:50 UTC</small>
+        <small>Made with Nim. Generated: 2017-01-27 14:04:35 UTC</small>
       </div>
     </div>
   </div>

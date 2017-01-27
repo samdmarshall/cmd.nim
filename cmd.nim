@@ -20,52 +20,54 @@ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ]#
 
-import tables
+import sets
+import hashes
 import strutils
 
-const CommandHookNames: seq[string] = @["help", "pre", "post"]
-
-type 
+type
+  Command* = object
+    ## Object representing a command that can be registered with the command prompt
+    name*: string
+      ## Name of the command, the first word that will be entered into the prompt, all following words are arguments to this command
+    help*: string
+      ## Text to display when invoking the `help` command for this command
+    preCmd*: CmdCallback
+      ## A callback that gets run prior to the command being run (optional)
+    exeCmd*: CmdCallback
+      ## Function contaning the primary logic for the command 
+    postCmd*: CmdCallback
+      ## A callback that gets run prior to the command being run (optional)
   CmdPrompt* = object
-    defaultCommands: Table[string, Table[string, CmdCallback]]
-    additionalCommands: Table[string, Table[string, CmdCallback]]
-    promptString: string
+    ## 
+    commands*: HashSet[Command]
+    promptString*: string
     activePrompt: bool
   CmdCallback* = proc (ctx: var CmdPrompt, input: seq[string]): void {.gcsafe.}
+    ## 
 
 #
 ##
 proc builtinHelpCommand(ctx: var CmdPrompt, input: seq[string]): void =
   if input.len == 0:
     # asking for general help, not help of a specific command, this should list all available commands
-    echo("")
+    write(stdout, "todo")
   else:
     # looking for help on a specific command
     let queried_command = input[0]
-    if tables.hasKey(ctx.defaultCommands, queried_command):
-      # the command is part of the default set
-      ctx.defaultCommands[queried_command]["help"](ctx, @[])
-    elif tables.hasKey(ctx.additionalCommands, queried_command):
-      # the command is part of the set added by the user
-      ctx.defaultCommands[queried_command]["help"](ctx, @[])
+    case queried_command
+    of "help":
+      write(stdout, "displays a list of available commands")
+    of "quit":
+      write(stdout, "stops the interactive prompt")
     else:
-      # there is no definition for this command
-      echo("no help is available for this command")
+      for command in ctx.commands:
+        if command.name == queried_command:
+          write(stdout, command.help)
 
-# Disable the current run-loop behavior of the prompt
+# Disable the current run-loop behavior of the prompt, allowing it to exit and return to the caller of `.run()`
 ##
 proc builtinQuitCommand(ctx: var CmdPrompt, input: seq[string]): void =
   ctx.activePrompt = false
-
-#
-##
-proc builtinQuitCommand_help(ctx: var CmdPrompt, input: seq[string]): void = 
-  echo("stops the interactive prompt")
-
-# This is used as a "do nothing" call when there is no callback assigned to a hook
-##
-proc builtinNoOpCommand(ctx: var CmdPrompt, input: seq[string]): void =
-  discard
 
 # ===========
 # Private API
@@ -74,92 +76,53 @@ proc builtinNoOpCommand(ctx: var CmdPrompt, input: seq[string]): void =
 # (re)Draws the prompt
 ##
 proc drawPrompt(ctx: var CmdPrompt): void =
-  write(stdout, "\n")
-  write(stdout, ctx.promptString)
+  let prompt_prefix: string = 
+    if ctx.promptString == nil: "(Cmd) "
+    else: ctx.promptString
+  write(stdout, "\n" & prompt_prefix)
   flushFile(stdout)
 
 #
 ##
 proc executeCommandInput(ctx: var CmdPrompt, input: seq[string]): void =
-  var command_table: Table[string, CmdCallback]
-  var invalid_command: bool = false
-  let command = input[0]
-  let arguments = input[1..input.high]
-  if tables.hasKey(ctx.defaultCommands, command):
-    command_table = ctx.defaultCommands[command]
-  elif tables.hasKey(ctx.additionalCommands, command):
-    command_table = ctx.additionalCommands[command]
+  let command_str: string = 
+    if input.len > 0: input[0] 
+    else: ""
+  let arguments: seq[string] = 
+    if input.len >= 1: input[1..input.high] 
+    else: @[]
+  case command_str:
+  of "help":
+    builtinHelpCommand(ctx, arguments)
+  of "quit":
+    builtinQuitCommand(ctx, arguments)
   else:
-    invalid_command = true
-
-  if not invalid_command:
-    command_table["pre"](ctx, arguments)
-    command_table["cmd"](ctx, arguments)
-    command_table["post"](ctx, arguments)
+    for command in ctx.commands:
+      if command.name == command_str:
+        if not (command.preCmd == nil):
+          command.preCmd(ctx, arguments)
+        if not (command.exeCmd == nil):
+          command.exeCmd(ctx, arguments)
+        if not (command.postCmd == nil):
+          command.postCmd(ctx, arguments)
+      else:
+        write(stdout, "unknown command")
+  write(stdout, "\n")
+  flushFile(stdout)
 
 # ==========
 # Public API
 # ==========
-
-#
-##s
-proc initializeCommandPrompt*(): CmdPrompt = 
-  let cast_noop_callback = cast[CmdCallback](builtinNoOpCommand)
-  
-  let help_command: Table[string, CmdCallback] = {
-    "cmd": cast[CmdCallback](builtinHelpCommand), 
-    "help": cast_noop_callback, 
-    "pre": cast_noop_callback, 
-    "post": cast_noop_callback
-  }.toTable
-  
-  let quit_command: Table[string, CmdCallback] = {
-    "cmd": cast[CmdCallback](builtinQuitCommand), 
-    "help": cast[CmdCallback](builtinQuitCommand_help), 
-    "pre": cast_noop_callback, 
-    "post": cast_noop_callback
-  }.toTable
-
-  let default_commands: Table[string, Table[string, CmdCallback]] = {
-    "help": help_command, 
-    "quit": quit_command
-  }.toTable
-  
-  let additional_commands = tables.initTable[string, Table[string, CmdCallback]]()
-  result = CmdPrompt(defaultCommands: default_commands, additionalCommands: additional_commands, promptString: "(Cmd) ", activePrompt: true)
-
-#
-##
-proc addCommand*(ctx: var CmdPrompt, cmdKey: string, execCallback: CmdCallback, hooks: Table[string, CmdCallback]): bool = 
-  var was_able_to_add_command: bool = false
-  let builtin_define_exists = tables.hasKey(ctx.defaultCommands, cmdKey)
-  let additional_define_exists = tables.hasKey(ctx.additionalCommands, cmdKey)
-
-  if not builtin_define_exists and not additional_define_exists:
-    let help_hook = if tables.hasKey(hooks, "help"): hooks["help"] else: builtinNoOpCommand
-    let pre_hook  = if tables.hasKey(hooks, "pre" ): hooks["pre" ] else: builtinNoOpCommand
-    let post_hook = if tables.hasKey(hooks, "post"): hooks["post"] else: builtinNoOpCommand
-    for key in tables.keys(hooks):
-      if not (key in CommandHookNames):
-        echo("Unknown hook with name '" & key & "' found, ignoring!")
-    let new_command_hooks = {
-      "cmd": execCallback, 
-      "help": help_hook,
-      "pre": pre_hook, 
-      "post": post_hook
-    }.toTable
-    
-    ctx.additionalCommands[cmdKey] = new_command_hooks
-    was_able_to_add_command = true
-  else:
-    echo("Error, a command with name '" & cmdKey & "' already exists!")
-  result = was_able_to_add_command
-
-#
-##
-proc runPrompt*(ctx: var CmdPrompt): void = 
+ 
+proc run*(ctx: var CmdPrompt): void = 
+  ## Starts the interactive command prompt
+  ctx.activePrompt = true
   while ctx.activePrompt:
-    drawPrompt(ctx)
+    ctx.drawPrompt()
     let raw_input = readLine(stdin)
     let input = strutils.split(raw_input)
-    executeCommandInput(ctx, input)
+    ctx.executeCommandInput(input)
+
+proc hash*(command: Command): hashes.Hash =
+  ## Exposing the hash implementation for the `Command` object
+  result = hash(command.name)

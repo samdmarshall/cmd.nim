@@ -5,7 +5,8 @@ author        = "Samantha Marshall"
 description   = "interactive command prompt"
 license       = "BSD 3-Clause"
 
+skipDirs      = @["tests"]
+
 # Dependencies
 
 requires "nim >= 0.16.0"
-

@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import sets
 import hashes
+import sequtils
 import strutils
 
 type
@@ -29,6 +30,8 @@ type
     ## Object representing a command that can be registered with the command prompt
     name*: string
       ## Name of the command, the first word that will be entered into the prompt, all following words are arguments to this command
+    desc*: string
+      ## Short description of the command 
     help*: string
       ## Text to display when invoking the `help` command for this command
     preCmd*: CmdCallback
@@ -50,7 +53,10 @@ type
 proc builtinHelpCommand(ctx: var CmdPrompt, input: seq[string]): void =
   if input.len == 0:
     # asking for general help, not help of a specific command, this should list all available commands
-    write(stdout, "todo")
+    for cmd in ctx.commands:
+      write(stdout, cmd.name & " - " & cmd.desc & "\n")
+    write(stdout, "help - displays available commands and their descriptions\n")
+    write(stdout, "quit/exit - exits the prompt\n"
   else:
     # looking for help on a specific command
     let queried_command = input[0]
@@ -94,19 +100,20 @@ proc executeCommandInput(ctx: var CmdPrompt, input: seq[string]): void =
   case command_str:
   of "help":
     builtinHelpCommand(ctx, arguments)
-  of "quit":
+  of "quit", "exit":
     builtinQuitCommand(ctx, arguments)
   else:
-    for command in ctx.commands:
-      if command.name == command_str:
-        if not (command.preCmd == nil):
-          command.preCmd(ctx, arguments)
-        if not (command.exeCmd == nil):
-          command.exeCmd(ctx, arguments)
-        if not (command.postCmd == nil):
-          command.postCmd(ctx, arguments)
-      else:
-        write(stdout, "unknown command")
+    let matched_commands = filter(toSeq(ctx.commands.items), proc (x: Command): bool = x.name == command_str)
+    if matched_commands.len > 0:
+      let command = matched_commands[0]
+      if not (command.preCmd == nil):
+        command.preCmd(ctx, arguments)
+      if not (command.exeCmd == nil):
+        command.exeCmd(ctx, arguments)
+      if not (command.postCmd == nil):
+        command.postCmd(ctx, arguments)
+    else:
+      write(stdout, "unknown command")
   write(stdout, "\n")
   flushFile(stdout)
 

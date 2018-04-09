@@ -56,7 +56,7 @@ proc builtinHelpCommand(ctx: var CmdPrompt, input: seq[string]): void =
     for cmd in ctx.commands:
       write(stdout, cmd.name & " - " & cmd.desc & "\n")
     write(stdout, "help - displays available commands and their descriptions\n")
-    write(stdout, "quit/exit - exits the prompt\n"
+    write(stdout, "quit/exit - exits the prompt\n")
   else:
     # looking for help on a specific command
     let queried_command = input[0]
